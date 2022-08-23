@@ -24,7 +24,6 @@ import ArgonTypography from "components/ArgonTypography";
 
 // Argon Dashboard 2 MUI example components
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
-import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import Footer from "examples/Footer";
 import DetailedStatisticsCard from "examples/Cards/StatisticsCards/DetailedStatisticsCard";
 import SalesTable from "examples/Tables/SalesTable";
@@ -46,7 +45,6 @@ function Default() {
   const { size } = typography;
   return (
     <DashboardLayout>
-      <DashboardNavbar />
       <ArgonBox py={3}>
         <Grid container spacing={3} mb={3}>
           <Grid item xs={12} md={6} lg={3}>
