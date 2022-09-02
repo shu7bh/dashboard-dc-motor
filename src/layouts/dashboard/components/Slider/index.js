@@ -18,7 +18,6 @@ import ArgonTypography from "components/ArgonTypography";
 
 // Images
 import bg1 from "assets/images/img-2.jpg";
-import bg2 from "assets/images/img-1.jpg";
 import bg3 from "assets/images/img-3.jpg";
 
 function Slider() {
@@ -123,41 +122,6 @@ function Slider() {
               <ArgonTypography variant="body2" color="white">
                 There&apos;s nothing I really wanted to do in life that I wasn&apos;t able to get
                 good at.
-              </ArgonTypography>
-            </ArgonBox>
-          </ArgonBox>
-        </SwiperSlide>
-        <SwiperSlide>
-          <ArgonBox
-            sx={{
-              position: "relative",
-              backgroundImage: `url(${bg2})`,
-              backgroundSize: "cover",
-              height: "100%",
-            }}
-          >
-            <ArgonBox position="absolute" bottom={16} ml={6} py={2.5} textAlign="left" width="80%">
-              <ArgonBox
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                width="32px"
-                height="32px"
-                bgColor="white"
-                borderRadius="md"
-                textAlign="center"
-                mb={2}
-              >
-                <ArgonTypography variant="caption" lineHeight={0}>
-                  <ArgonBox component="i" color="dark" className="ni ni-bulb-61" />
-                </ArgonTypography>
-              </ArgonBox>
-              <ArgonTypography variant="h5" color="white" mb={0.5}>
-                Faster way to create web pages
-              </ArgonTypography>
-              <ArgonTypography variant="body2" color="white">
-                That&apos;s my skill. I&apos;m not really specifically talented at anything except
-                for the ability to learn.
               </ArgonTypography>
             </ArgonBox>
           </ArgonBox>
