@@ -32,24 +32,14 @@ import Slider from '@mui/material/Slider';
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import Footer from "examples/Footer";
 import DetailedStatisticsCard from "examples/Cards/StatisticsCards/DetailedStatisticsCard";
-import SalesTable from "examples/Tables/SalesTable";
-import CategoriesList from "examples/Lists/CategoriesList";
 import GradientLineChart from "examples/Charts/LineCharts/GradientLineChart";
-
-// Argon Dashboard 2 MUI base styles
 import typography from "assets/theme/base/typography";
-
-// Dashboard layout components
-//import Slider from "layouts/dashboard/components/Slider";
-
-// Data
-import salesTableData from "layouts/dashboard/data/salesTableData";
-import categoriesListData from "layouts/dashboard/data/categoriesListData";
 
 function Default() {
     const { size } = typography;
     const [count, setCount] = useState(0);
     const [chartData, setChartData] = useState({});
+    const [pwm, setPwm] = useState(100);
 
     const marks = [
         {
@@ -62,38 +52,49 @@ function Default() {
         },
     ];
 
-    function valuetext(value) {
-        return `${value}°C`;
-    }
+        //axios.get('https://api.thingspeak.com/channels/1839559/feeds.json?api_key=N11LTANIFU3RSH5N&results=30')
+
     useEffect(() => {
-        axios.get('https://api.thingspeak.com/channels/1839559/feeds.json?api_key=N11LTANIFU3RSH5N&results=30')
+        axios.get('https://api.thingspeak.com/channels/1839559/fields/1.json?api_key=N11LTANIFU3RSH5N&results=30')
             .then(response => {
-                setCount(response.data.feeds[2].field1);
-                console.log(response.data.feeds);
-                const labels = []
-                const data = []
-                response.data.feeds.map(val => {
-                    data.push(val.field2)
-                    labels.push(val.field1);
-                })
-                setChartData({
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: "RPM",
-                            color: "info",
-                            data: data,
-                        },
-                    ],
-                })
+                axios.get('https://api.thingspeak.com/channels/1839559/fields/2.json?api_key=N11LTANIFU3RSH5N&results=30')
+                    .then(res => {
+                        setCount(response.data.feeds[2].field1);
+                        const labels = []
+                        const data = []
+                        response.data.feeds.map(val => {
+                            labels.push(val.field1);
+                        })
+                        res.data.feeds.map(val => {
+                            data.push(val.field2);
+                        })
+
+                        setChartData({
+                            labels: labels,
+                            datasets: [{
+                                label: "RPM",
+                                color: "info",
+                                data: data,
+                            },],
+                        })
+                    })
             })
     }, [])
+
+    useEffect(() => {
+        axios.get('https://api.thingspeak.com/update?api_key=DG54QL8ZBGLS9Y1F&field3=' + pwm)
+            .then(() => {
+                console.log("value changed")
+            })
+    }, [pwm])
 
     return (
         <DashboardLayout>
             <ArgonBox py={3}>
                 <Grid container spacing={3} mb={3}>
-                    <Grid item xs={12} md={6} lg={3}>
+                    <Grid item xs={12} md={6} lg={1}>
+                    </Grid>
+                    <Grid item xs={12} md={6} lg={4}>
                         <DetailedStatisticsCard
                         title="today's money"
                         count={count}
@@ -101,7 +102,7 @@ function Default() {
                         percentage={{ color: "success", count: "+55%", text: "since yesterday" }}
                         />
                     </Grid>
-                    <Grid item xs={12} md={6} lg={3}>
+                    <Grid item xs={12} md={6} lg={4}>
                         <DetailedStatisticsCard
                         title="today's users"
                         count="2,300"
@@ -109,25 +110,11 @@ function Default() {
                         percentage={{ color: "success", count: "+3%", text: "since last week" }}
                         />
                     </Grid>
-                    <Grid item xs={12} md={6} lg={3}>
-                        <DetailedStatisticsCard
-                        title="new clients"
-                        count="+3,462"
-                        icon={{ color: "success", component: <i className="ni ni-paper-diploma" /> }}
-                        percentage={{ color: "error", count: "-2%", text: "since last quarter" }}
-                        />
-                    </Grid>
-                    <Grid item xs={12} md={6} lg={3}>
-                        <DetailedStatisticsCard
-                        title="sales"
-                        count="$103,430"
-                        icon={{ color: "warning", component: <i className="ni ni-cart" /> }}
-                        percentage={{ color: "success", count: "+5%", text: "than last month" }}
-                        />
-                    </Grid>
                 </Grid>
                 <Grid container spacing={3} mb={3}>
-                    <Grid item xs={12} lg={7}>
+                    <Grid item xs={12} md={6} lg={1}>
+                    </Grid>
+                    <Grid item xs={12} lg={8}>
                         <GradientLineChart
                         title="Sales Overview"
                         description={
@@ -148,26 +135,20 @@ function Default() {
                     </Grid>
                 </Grid>
                 <Grid container spacing={3} mb={3}>
+                    <Grid item xs={12} md={6} lg={1}>
+                    </Grid>
                     <Grid item>
                         <Box sx={{ width: 300, height: 15 }}>
                         <Slider
                             aria-label="Always visible"
-                            defaultValue={100}
-                            getAriaValueText={valuetext}
+                            defaultValue={pwm}
                             step={5}
                             max={255}
                             marks={marks}
+                            onChange={val => setPwm(val)}
                             valueLabelDisplay="on"
                         />
                         </Box>
-                    </Grid>
-                </Grid>
-                <Grid container spacing={3}>
-                    <Grid item xs={12} md={8}>
-                        <SalesTable title="Sales by Country" rows={salesTableData} />
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                        <CategoriesList title="categories" categories={categoriesListData} />
                     </Grid>
                 </Grid>
             </ArgonBox>
