@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
 =========================================================
  * Argon Dashboard 2 MUI - v3.0.0
@@ -13,141 +14,193 @@ Coded by www.creative-tim.com
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  */
 
-import { useState, useEffect, useMemo } from "react";
-
-// react-router components
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-
 // @mui material components
-import { ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-import Icon from "@mui/material/Icon";
+import Grid from "@mui/material/Grid";
+import React, { useEffect } from 'react';
+import axios from 'axios';
+import { useState } from 'react';
+import ElectricMeterIcon from '@mui/icons-material/ElectricMeter';
+import SpeedIcon from '@mui/icons-material/Speed';
 
 // Argon Dashboard 2 MUI components
-import ArgonBox from "components/ArgonBox";
 
-// Argon Dashboard 2 MUI example components
-import Configurator from "examples/Configurator";
+import Box from '@mui/material/Box';
+import Slider from '@mui/material/Slider';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Typography from '@mui/material/Typography';
 
-// Argon Dashboard 2 MUI themes
-import theme from "assets/theme";
-import themeRTL from "assets/theme/theme-rtl";
-import themeDark from "assets/theme-dark";
-import themeDarkRTL from "assets/theme-dark/theme-rtl";
+import Paper from '@material-ui/core/Paper';
+import { Line } from 'react-chartjs-2';
 
-// RTL plugins
-import rtlPlugin from "stylis-plugin-rtl";
-import { CacheProvider } from "@emotion/react";
-import createCache from "@emotion/cache";
+function Default() {
+    const [rpm, setRpm] = useState(null);
+    const [voltage, setVoltage] = useState(null);
+    const [rpmData, setRpmData] = useState([]);
+    const [voltageData, setVoltageData] = useState([]);
+    const [pwm, setPwm] = useState(100);
 
-// Argon Dashboard 2 MUI routes
-import routes from "routes";
+    const categories = []
+    const arr = []
+    const sv = []
+    const srpm = []
 
-// Argon Dashboard 2 MUI contexts
-import { useArgonController, setOpenConfigurator } from "context";
+    for (let i = 0; i < 30; i++)
+        categories.push(i)
 
-// Icon Fonts
-import "assets/css/nucleo-icons.css";
-import "assets/css/nucleo-svg.css";
+    const marks = [
+        {
+            value: 0,
+            label: '0 RPM',
+        },
+        {
+            value: 255,
+            label: '255 RPM',
+        },
+    ];
 
-export default function App() {
-    const [controller, dispatch] = useArgonController();
-    const { direction, layout, openConfigurator, darkMode } =
-        controller;
-    const [rtlCache, setRtlCache] = useState(null);
-    const { pathname } = useLocation();
-
-    // Cache for the rtl
-    useMemo(() => {
-        const cacheRtl = createCache({
-            key: "rtl",
-            stylisPlugins: [rtlPlugin],
-        });
-
-        setRtlCache(cacheRtl);
-    }, []);
-
-    // Change the openConfigurator state
-    const handleConfiguratorOpen = () => setOpenConfigurator(dispatch, !openConfigurator);
-
-    // Setting the dir attribute for the body element
     useEffect(() => {
-        document.body.setAttribute("dir", direction);
-    }, [direction]);
+        axios.get('https://api.thingspeak.com/channels/1839559/fields/1.json?api_key=N11LTANIFU3RSH5N&results=30')
+            .then(response => {
+                axios.get('https://api.thingspeak.com/channels/1839559/fields/2.json?api_key=N11LTANIFU3RSH5N&results=30')
+                    .then(res => {
+                        const labels = []
+                        const data = []
+                        response.data.feeds.map(val => {
+                            labels.push(val.field1);
+                        })
+                        setRpmData(labels)
 
-    // Setting page scroll to 0 when changing the route
+                        res.data.feeds.map(val => {
+                            data.push(val.field2);
+                        })
+                        setVoltageData(data)
+
+                        for (let i = 0; i < rpmData.length; i++)
+                            arr.push([rpmData[i], voltageData[i]])
+
+                        arr.sort((a, b) => a[1] - b[1])
+                        for (let i = 0; i < arr.length; i++)
+                            srpm.push(arr[i][0]), sv.push(arr[i][1])
+
+                        console.log(sv)
+                        console.log(srpm)
+                    })
+            })
+
+        axios.get('https://api.thingspeak.com/channels/1839559/fields/1.json?api_key=N11LTANIFU3RSH5N&results=1')
+            .then(res => {
+                setRpm(res.data.feeds[0].field1);
+            })
+
+        axios.get('https://api.thingspeak.com/channels/1839559/fields/2.json?api_key=N11LTANIFU3RSH5N&results=1')
+            .then(res => {
+                setVoltage(res.data.feeds[0].field2);
+            })
+    }, [])
+
     useEffect(() => {
-        document.documentElement.scrollTop = 0;
-        document.scrollingElement.scrollTop = 0;
-    }, [pathname]);
+        console.log(pwm)
+        axios.get('https://api.thingspeak.com/update?api_key=0LGM5L2SXPUYD8QQ&field1=' + pwm)
+            .then(response => {
+                console.log("value changed")
+                console.log(response.status)
+            })
+    }, [pwm])
 
-    const getRoutes = (allRoutes) =>
-        allRoutes.map((route) => {
-            if (route.collapse) {
-                return getRoutes(route.collapse);
-            }
-
-            if (route.route) {
-                return <Route exact path={route.route} element={route.component} key={route.key} />;
-            }
-
-            return null;
-        });
-
-    const configsButton = (
-        <ArgonBox
-        display="flex"
-        alignItems="center"
-        width="3.5rem"
-        height="3.5rem"
-        bgColor="white"
-        shadow="sm"
-        borderRadius="50%"
-        position="fixed"
-        right="2rem"
-        bottom="2rem"
-        zIndex={99}
-        color="dark"
-        sx={{ cursor: "pointer" }}
-        onClick={handleConfiguratorOpen}
-        >
-        <Icon fontSize="default" color="inherit">
-        settings
-        </Icon>
-        </ArgonBox>
-    );
-
-    return direction === "rtl" ? (
-        <CacheProvider value={rtlCache}>
-        <ThemeProvider theme={darkMode ? themeDarkRTL : themeRTL}>
-        <CssBaseline />
-        {layout === "dashboard" && (
-            <>
-            <Configurator />
-            {configsButton}
-            </>
-        )}
-        {layout === "vr" && <Configurator />}
-        <Routes>
-        {getRoutes(routes)}
-        <Route path="*" element={<Navigate to="/dashboard" />} />
-        </Routes>
-        </ThemeProvider>
-        </CacheProvider>
-    ) : (
-        <ThemeProvider theme={darkMode ? themeDark : theme}>
-        <CssBaseline />
-        {layout === "dashboard" && (
-            <>
-            <Configurator />
-            {configsButton}
-            </>
-        )}
-        {layout === "vr" && <Configurator />}
-        <Routes>
-        {getRoutes(routes)}
-        <Route path="*" element={<Navigate to="/dashboard" />} />
-        </Routes>
-        </ThemeProvider>
+    return (
+        <div>
+            <Grid container spacing={3} mb={3}>
+                <Grid item xs={12} md={6} lg={1}>
+                </Grid>
+                <Grid item xs={12} md={6} lg={4}>
+                    <Card sx={{ bgcolor: '#2196f3' }} >
+                        <CardContent>
+                            <Typography color="white" gutterBottom>
+                                <Typography sx={{ fontSize: 20 }}>
+                                    <SpeedIcon /> Latest RPM
+                                </Typography>
+                                {rpm}
+                            </Typography>
+                        </CardContent>
+                    </Card>
+                </Grid>
+                <Grid item xs={12} md={6} lg={4}>
+                    <Card sx={{ bgcolor: '#2196f3' }} >
+                        <CardContent>
+                            <Typography color="white" gutterBottom>
+                                <Typography sx={{ fontSize: 20 }}>
+                                    <ElectricMeterIcon /> Latest Voltage
+                                </Typography>
+                                {voltage}
+                            </Typography>
+                        </CardContent>
+                    </Card>
+                </Grid>
+            </Grid>
+            <Grid container spacing={3} mb={3}>
+                <Grid item xs={12} md={6} lg={1}>
+                </Grid>
+                <Grid item xs={12} lg={8}>
+                    <Paper>
+                        <Line
+                            data={{
+                                labels: categories,
+                                datasets: [{
+                                    label: 'RPM',
+                                    data: rpmData,
+                                    fill: true,
+                                    backgroundColor: 'red',
+                                },{
+                                    label: 'Voltage',
+                                    data: voltageData,
+                                    fill: true,
+                                    backgroundColor: 'orange',
+                                } ],
+                            }}
+                        >
+                        </Line>
+                    </Paper>
+                </Grid>
+            </Grid>
+            <Grid container spacing={3} mb={3}>
+                <Grid item xs={12} md={6} lg={1}>
+                </Grid>
+                <Grid item xs={12} lg={8}>
+                    <Paper>
+                        <Line
+                            data={{
+                                labels: rpmData,
+                                datasets: [{
+                                    label: 'Voltage',
+                                    data: voltageData,
+                                    fill: true,
+                                } ],
+                            }}
+                        >
+                        </Line>
+                    </Paper>
+                </Grid>
+            </Grid>
+            <Grid container spacing={3} mb={3}>
+                <Grid item xs={12} md={6} lg={1}>
+                </Grid>
+                <Grid item>
+                    <Box sx={{ width: 300, height: 15 }}>
+                    <Slider
+                        aria-label="Always visible"
+                        defaultValue={0}
+                        step={5}
+                        max={255}
+                        marks={marks}
+                        onChange={val => setPwm(val.target.value)}
+                        valueLabelDisplay="on"
+                    />
+                    </Box>
+                </Grid>
+            </Grid>
+        </div>
     );
 }
+
+export default Default;

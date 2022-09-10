@@ -151,7 +151,6 @@ DetailedStaticsCard.defaultProps = {
   bgColor: "white",
   percentage: {
     color: "success",
-    count: 0,
     text: "",
   },
   direction: "right",

@@ -16,31 +16,39 @@ Coded by www.creative-tim.com
 
 // @mui material components
 import Grid from "@mui/material/Grid";
-import Icon from "@mui/material/Icon";
 import React, { useEffect } from 'react';
 import axios from 'axios';
 import { useState } from 'react';
 
 // Argon Dashboard 2 MUI components
-import ArgonBox from "components/ArgonBox";
-import ArgonTypography from "components/ArgonTypography";
 
 import Box from '@mui/material/Box';
 import Slider from '@mui/material/Slider';
 
 // Argon Dashboard 2 MUI example components
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
-import Footer from "examples/Footer";
 import DetailedStatisticsCard from "examples/Cards/StatisticsCards/DetailedStatisticsCard";
-import GradientLineChart from "examples/Charts/LineCharts/GradientLineChart";
-import typography from "assets/theme/base/typography";
+import Paper from '@material-ui/core/Paper';
+import { Line } from 'react-chartjs-2';
 
 function Default() {
-    const { size } = typography;
-    const [count, setCount] = useState(0);
-    const [chartData, setChartData] = useState({});
+    const [rpm, setRpm] = useState(null);
+    const [voltage, setVoltage] = useState(null);
+    const [rpmData, setRpmData] = useState([]);
+    const [voltageData, setVoltageData] = useState([]);
     const [pwm, setPwm] = useState(100);
 
+    const categories = []
+    for (let i = 0; i < 30; i++)
+        categories.push(i)
+
+    const data = [
+      { x: 1, y: 30 },
+      { x: 2, y: 40 },
+      { x: 3, y: 5 },
+      { x: 4, y: 2 },
+      { x: 5, y: 21 },
+    ];
     const marks = [
         {
             value: 0,
@@ -52,62 +60,62 @@ function Default() {
         },
     ];
 
-        //axios.get('https://api.thingspeak.com/channels/1839559/feeds.json?api_key=N11LTANIFU3RSH5N&results=30')
-
     useEffect(() => {
         axios.get('https://api.thingspeak.com/channels/1839559/fields/1.json?api_key=N11LTANIFU3RSH5N&results=30')
             .then(response => {
                 axios.get('https://api.thingspeak.com/channels/1839559/fields/2.json?api_key=N11LTANIFU3RSH5N&results=30')
                     .then(res => {
-                        setCount(response.data.feeds[2].field1);
                         const labels = []
                         const data = []
                         response.data.feeds.map(val => {
                             labels.push(val.field1);
                         })
+                        setRpmData(labels)
+
                         res.data.feeds.map(val => {
                             data.push(val.field2);
                         })
-
-                        setChartData({
-                            labels: labels,
-                            datasets: [{
-                                label: "RPM",
-                                color: "info",
-                                data: data,
-                            },],
-                        })
+                        setVoltageData(data)
                     })
+            })
+
+        axios.get('https://api.thingspeak.com/channels/1839559/fields/1.json?api_key=N11LTANIFU3RSH5N&results=1')
+            .then(res => {
+                setRpm(res.data.feeds[0].field1);
+            })
+
+        axios.get('https://api.thingspeak.com/channels/1839559/fields/2.json?api_key=N11LTANIFU3RSH5N&results=1')
+            .then(res => {
+                setVoltage(res.data.feeds[0].field2);
             })
     }, [])
 
     useEffect(() => {
-        axios.get('https://api.thingspeak.com/update?api_key=DG54QL8ZBGLS9Y1F&field3=' + pwm)
-            .then(() => {
+        console.log(pwm)
+        axios.get('https://api.thingspeak.com/update?api_key=0LGM5L2SXPUYD8QQ&field1=' + pwm)
+            .then(response => {
                 console.log("value changed")
+                console.log(response.status)
             })
     }, [pwm])
 
     return (
         <DashboardLayout>
-            <ArgonBox py={3}>
                 <Grid container spacing={3} mb={3}>
                     <Grid item xs={12} md={6} lg={1}>
                     </Grid>
                     <Grid item xs={12} md={6} lg={4}>
                         <DetailedStatisticsCard
-                        title="today's money"
-                        count={count}
+                        title="Latest RPM"
+                        count={rpm}
                         icon={{ color: "info", component: <i className="ni ni-money-coins" /> }}
-                        percentage={{ color: "success", count: "+55%", text: "since yesterday" }}
                         />
                     </Grid>
                     <Grid item xs={12} md={6} lg={4}>
                         <DetailedStatisticsCard
-                        title="today's users"
-                        count="2,300"
+                        title="Latest Voltage"
+                        count={voltage}
                         icon={{ color: "error", component: <i className="ni ni-world" /> }}
-                        percentage={{ color: "success", count: "+3%", text: "since last week" }}
                         />
                     </Grid>
                 </Grid>
@@ -115,23 +123,19 @@ function Default() {
                     <Grid item xs={12} md={6} lg={1}>
                     </Grid>
                     <Grid item xs={12} lg={8}>
-                        <GradientLineChart
-                        title="Sales Overview"
-                        description={
-                            <ArgonBox display="flex" alignItems="center">
-                            <ArgonBox fontSize={size.lg} color="success" mb={0.3} mr={0.5} lineHeight={0}>
-                            <Icon sx={{ fontWeight: "bold" }}>arrow_upward</Icon>
-                            </ArgonBox>
-                            <ArgonTypography variant="button" color="text" fontWeight="medium">
-                            4% more{" "}
-                            <ArgonTypography variant="button" color="text" fontWeight="regular">
-                            in 2022
-                            </ArgonTypography>
-                            </ArgonTypography>
-                            </ArgonBox>
-                        }
-                        chart={chartData}
-                        />
+                        <Paper>
+                            <Line
+                                data={{
+                                    labels: categories,
+                                    datasets: [{
+                                        label: 'RPM',
+                                        data: rpmData,
+                                        fill: true,
+                                    }],
+                                }}
+                            >
+                            </Line>
+                        </Paper>
                     </Grid>
                 </Grid>
                 <Grid container spacing={3} mb={3}>
@@ -141,18 +145,16 @@ function Default() {
                         <Box sx={{ width: 300, height: 15 }}>
                         <Slider
                             aria-label="Always visible"
-                            defaultValue={pwm}
+                            defaultValue={100}
                             step={5}
                             max={255}
                             marks={marks}
-                            onChange={val => setPwm(val)}
+                            onChange={val => setPwm(val.target.value)}
                             valueLabelDisplay="on"
                         />
                         </Box>
                     </Grid>
                 </Grid>
-            </ArgonBox>
-            <Footer />
         </DashboardLayout>
     );
 }
